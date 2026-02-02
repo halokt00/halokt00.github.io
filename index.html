@@ -18,14 +18,17 @@
         .menu-btn { transition: all 0.2s ease; }
         .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         
-        /* Hiệu ứng "thở" cho ảnh tu luyện */
         @keyframes breathe {
             0%, 100% { transform: scale(1); opacity: 0.9; filter: brightness(1); }
             50% { transform: scale(1.02); opacity: 1; filter: brightness(1.2); box-shadow: 0 0 30px rgba(234, 179, 8, 0.4); }
         }
-        .meditating-img {
-            animation: breathe 4s ease-in-out infinite;
-        }
+        .meditating-img { animation: breathe 4s ease-in-out infinite; }
+
+        /* Custom Scrollbar cho Modal */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1f2937; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #6b7280; }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -49,7 +52,7 @@
                 <i class="fa-solid fa-upload mr-2"></i> Tải Save
             </button>
         </div>
-        <div class="text-xs text-gray-600 mt-8">Ver 1.2.0 - Auto Tu Luyện & Linh Thạch</div>
+        <div class="text-xs text-gray-600 mt-8">Ver 1.3.0 - Nhân Vật & Trang Bị</div>
     </div>
 
     <div id="game-container" class="hidden w-full max-w-4xl h-[90vh] bg-gray-900 border border-gray-700 rounded-xl shadow-2xl relative overflow-hidden flex flex-col">
@@ -65,12 +68,12 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-4 bg-gray-900 px-3 py-1 rounded-full border border-gray-700">
+            <div class="flex items-center gap-4 bg-gray-900 px-3 py-1 rounded border border-gray-700">
                 <div class="flex items-center text-blue-400 text-sm font-bold" title="Linh Thạch">
-                    <i class="fa-solid fa-gem mr-2"></i>
+                    <span class="mr-2 text-gray-400 text-xs uppercase">Linh Thạch:</span>
                     <span id="display-stones">0</span>
                 </div>
-                 </div>
+            </div>
             
             <div class="flex gap-2">
                 <button onclick="exportSaveFile()" class="text-xs bg-green-800 hover:bg-green-700 text-white px-3 py-1 rounded border border-green-600"><i class="fa-solid fa-download"></i> Lưu</button>
@@ -79,44 +82,117 @@
         </div>
         
         <div class="flex-1 overflow-y-auto p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] relative flex flex-col items-center justify-center">
-            
             <div class="max-w-md w-full text-center space-y-6 relative z-10">
-                
                 <div class="relative w-64 h-64 mx-auto rounded-full border-4 border-yellow-600/50 overflow-hidden shadow-[0_0_30px_rgba(234,179,8,0.2)] bg-black">
                     <img src="https://i.pinimg.com/564x/c1/8d/19/c18d19606a928b9d4b0a7341b833c26d.jpg" alt="Tu Luyện" class="w-full h-full object-cover meditating-img">
                     <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent"></div>
                 </div>
-
                 <div>
                     <h2 class="text-xl font-bold text-yellow-100">Đang Nhập Định Tu Hành...</h2>
-                    <p class="text-sm text-cyan-400 animate-pulse mt-1">
-                        <i class="fa-solid fa-seedling mr-1"></i> Tự động hấp thu Thiên Địa Linh Khí
-                    </p>
+                    <p class="text-sm text-cyan-400 animate-pulse mt-1"><i class="fa-solid fa-seedling mr-1"></i> Tự động hấp thu Thiên Địa Linh Khí</p>
                     <p id="gain-rate-text" class="text-xs text-gray-500 mt-2"></p>
                 </div>
-
                 <div class="bg-gray-800 rounded-full h-6 w-full border border-gray-600 relative overflow-hidden shadow">
                     <div id="exp-bar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-500 ease-out" style="width: 0%"></div>
                     <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                         <span id="exp-text">0 / 100</span>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <div class="bg-gray-800 p-2 border-t border-gray-700 flex justify-center gap-4 z-20">
+            <button onclick="openCharacterModal()" class="flex flex-col items-center justify-center w-20 h-16 bg-gray-700 hover:bg-gray-600 rounded border border-gray-600 text-yellow-500 transition relative">
+                <i class="fa-solid fa-user-shield text-xl mb-1"></i>
+                <span class="text-[10px] font-bold uppercase">Nhân Vật</span>
+                <div id="noti-char" class="hidden absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border border-gray-800"></div>
+            </button>
+            <button class="flex flex-col items-center justify-center w-20 h-16 bg-gray-900/50 text-gray-500 rounded border border-gray-800 cursor-not-allowed">
+                <i class="fa-solid fa-sack-dollar text-xl mb-1"></i>
+                <span class="text-[10px] uppercase">Túi Đồ</span>
+            </button>
+             <button class="flex flex-col items-center justify-center w-20 h-16 bg-gray-900/50 text-gray-500 rounded border border-gray-800 cursor-not-allowed">
+                <i class="fa-solid fa-dungeon text-xl mb-1"></i>
+                <span class="text-[10px] uppercase">Bí Cảnh</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-character" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 w-full max-w-2xl h-[85vh] border border-gray-600 rounded-lg flex flex-col shadow-2xl relative">
+            
+            <div class="flex justify-between items-center p-3 border-b border-gray-700 bg-gray-800">
+                <h3 class="text-yellow-500 font-bold text-lg"><i class="fa-solid fa-user-circle mr-2"></i>Thông Tin Nhân Vật</h3>
+                <button onclick="closeCharacterModal()" class="text-gray-400 hover:text-white w-8 h-8"><i class="fa-solid fa-times text-xl"></i></button>
             </div>
 
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <div class="flex border-b border-gray-700 bg-gray-800/50">
+                    <button onclick="switchCharTab('equip')" id="tab-btn-equip" class="flex-1 py-3 text-sm font-bold text-yellow-500 border-b-2 border-yellow-500 bg-gray-800 transition">TRANG BỊ</button>
+                    <button onclick="switchCharTab('stats')" id="tab-btn-stats" class="flex-1 py-3 text-sm font-bold text-gray-400 hover:text-gray-200 transition">THUỘC TÍNH</button>
+                </div>
+
+                <div id="tab-content-equip" class="flex-1 overflow-y-auto p-4 custom-scroll space-y-6">
+                    
+                    <div>
+                        <div class="text-xs text-gray-500 mb-2 uppercase tracking-wider font-bold">Trang Bị Đang Mang</div>
+                        <div class="grid grid-cols-4 gap-2 md:gap-4" id="equip-slots-container">
+                            </div>
+                    </div>
+
+                    <hr class="border-gray-700">
+
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <div class="text-xs text-gray-500 uppercase tracking-wider font-bold">Tiềm Năng</div>
+                            <div class="text-sm text-yellow-400">Điểm dư: <span id="val-potential" class="font-bold text-lg">0</span></div>
+                        </div>
+
+                        <div class="space-y-2" id="attributes-list">
+                            </div>
+                    </div>
+                </div>
+
+                <div id="tab-content-stats" class="hidden flex-1 overflow-y-auto p-4 custom-scroll">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm" id="detailed-stats-container">
+                        </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const LOCAL_STORAGE_KEY = 'thien_dao_tu_tien_v1_2';
+        const LOCAL_STORAGE_KEY = 'thien_dao_tu_tien_v1_3';
+        const TICK_RATE_MS = 1000;
+        
+        // --- CONSTANTS ---
         const REALMS = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần", "Phản Hư", "Hợp Thể", "Đại Thừa", "Độ Kiếp", "Tiên Nhân", "Chân Tiên", "Kim Tiên", "Thái Ất", "Đại La", "Hỗn Độn", "Chí Tôn", "Thiên Đạo", "Vô Cực", "Hư Vô", "Hồng Mông", "Đạo Tổ", "Vô Tận", "Chân Lý", "Chưởng Nguyên", "Siêu Thoát"];
         const SUB_REALMS = ["Nhất Trọng", "Nhị Trọng", "Tam Trọng", "Tứ Trọng", "Ngũ Trọng", "Lục Trọng", "Thất Trọng", "Bát Trọng", "Cửu Trọng"];
-        const TICK_RATE_MS = 1000; // Cập nhật mỗi 1 giây
 
+        const EQUIP_SLOTS_DEF = [
+            { id: 'than_binh', name: 'Thần Binh', icon: 'fa-khanda' },
+            { id: 'huyen_quan', name: 'Huyền Quan', icon: 'fa-helmet-safety' },
+            { id: 'linh_giap', name: 'Linh Giáp', icon: 'fa-shirt' },
+            { id: 'huyen_quan_leg', name: 'Huyền Quần', icon: 'fa-socks' }, // Sửa tên biến tránh trùng
+            { id: 'than_hai', name: 'Thần Hài', icon: 'fa-boot' },
+            { id: 'nhan_trai', name: 'Nhẫn Trái', icon: 'fa-ring' },
+            { id: 'nhan_phai', name: 'Nhẫn Phải', icon: 'fa-ring' },
+            { id: 'ngoc_boi', name: 'Ngọc Bội', icon: 'fa-gem' }
+        ];
+
+        const ATTRIBUTES_DEF = [
+            { id: 'body', name: 'Thể Phách', desc: 'Tăng HP, %HP, Kháng hút máu' },
+            { id: 'strength', name: 'Lực Tay', desc: 'Tăng Công, Bạo kích, Sát thương bạo' },
+            { id: 'bone', name: 'Căn Cốt', desc: 'Tăng Thủ, HP, Kháng bạo, Phản đòn' },
+            { id: 'agility', name: 'Thân Pháp', desc: 'Tăng Tốc, Né, Chính xác, Liên kích' }
+        ];
+
+        // --- STATE ---
         let gameData = {};
-        let gameLoopInterval = null; // Biến giữ vòng lặp game
+        let gameLoopInterval = null;
 
-        // --- CORE CALCULATION ---
+        // --- CORE FUNCTIONS ---
+
         function getMaxExp(level) {
             if (level >= 225) return 42000000000;
             const R = 1.0933405; 
@@ -125,78 +201,113 @@
             if (exp > 1000) return Math.floor(exp / 100) * 100;
             return Math.floor(exp);
         }
+
         function getRealmName(level) {
             if (level > 225) return "Siêu Thoát Viên Mãn";
             const realmIndex = Math.floor((level - 1) / 9);
             const subIndex = (level - 1) % 9;
-            if (realmIndex >= REALMS.length) return "Vô Thượng Cảnh";
-            return `${REALMS[realmIndex]} ${SUB_REALMS[subIndex]}`;
+            return (realmIndex >= REALMS.length) ? "Vô Thượng Cảnh" : `${REALMS[realmIndex]} ${SUB_REALMS[subIndex]}`;
         }
 
-        // --- AUTO CULTIVATION LOOP (NEW) ---
+        // TÍNH TOÁN STATS (New)
+        function calculateStats() {
+            const p = gameData.player;
+            const attr = p.attributes;
+
+            // Base stats
+            let stats = {
+                hp: 100, hp_percent: 0,
+                attack: 10,
+                defense: 5,
+                speed: 10, speed_percent: 0,
+                crit_rate: 0, crit_dmg: 150, // % base
+                vamp_resist: 0,
+                crit_resist: 0, crit_dmg_resist: 0,
+                counter_rate: 0, counter_dmg: 0,
+                dodge: 0, accuracy: 0,
+                combo: 0, combo_resist: 0,
+                true_dmg_rate: 0
+            };
+
+            // 1. Cộng từ Điểm Tiềm Năng (Attribute Points)
+            // Thể Phách: +120 HP, +0.06% HP, +0.03% Kháng hút máu
+            stats.hp += attr.body * 120;
+            stats.hp_percent += attr.body * 0.06;
+            stats.vamp_resist += attr.body * 0.03;
+
+            // Lực Tay: +12 Atk, +0.01% Crit, +0.03% Crit Dmg, +0.00% True Dmg
+            stats.attack += attr.strength * 12;
+            stats.crit_rate += attr.strength * 0.01;
+            stats.crit_dmg += attr.strength * 0.03;
+
+            // Căn Cốt: +16 Def, +20 HP, +0.01% Crit Res, +0.03% Crit Dmg Res, +0.04% Counter, +0.01% Counter Dmg
+            stats.defense += attr.bone * 16;
+            stats.hp += attr.bone * 20;
+            stats.crit_resist += attr.bone * 0.01;
+            stats.crit_dmg_resist += attr.bone * 0.03;
+            stats.counter_rate += attr.bone * 0.04;
+            stats.counter_dmg += attr.bone * 0.01;
+
+            // Thân Pháp: +6 Speed, +0.05% Speed%, +0.04% Dodge, +0.04% Acc, +0.02% Combo, +0.02% Combo Res
+            stats.speed += attr.agility * 6;
+            stats.speed_percent += attr.agility * 0.05;
+            stats.dodge += attr.agility * 0.04;
+            stats.accuracy += attr.agility * 0.04;
+            stats.combo += attr.agility * 0.02;
+            stats.combo_resist += attr.agility * 0.02;
+
+            // 2. Cộng từ Trang Bị (Placeholder - chưa có item stats)
+            // TODO: Loop qua gameData.player.equipped để cộng chỉ số item
+
+            // 3. Tính toán Final (Áp dụng %)
+            stats.hp_final = Math.floor(stats.hp * (1 + stats.hp_percent / 100));
+            stats.speed_final = Math.floor(stats.speed * (1 + stats.speed_percent / 100));
+
+            return stats;
+        }
+
+        // --- AUTO LOOP ---
         function startGameLoop() {
-            if (gameLoopInterval) clearInterval(gameLoopInterval); // Đảm bảo chỉ có 1 loop chạy
+            if (gameLoopInterval) clearInterval(gameLoopInterval);
             gameLoopInterval = setInterval(gameTick, TICK_RATE_MS);
-            console.log("Game loop started.");
         }
-
-        function stopGameLoop() {
-            if (gameLoopInterval) {
-                clearInterval(gameLoopInterval);
-                gameLoopInterval = null;
-                console.log("Game loop stopped.");
-            }
-        }
+        function stopGameLoop() { if (gameLoopInterval) clearInterval(gameLoopInterval); }
 
         function gameTick() {
             const now = Date.now();
-            // Tính thời gian trôi qua kể từ lần tick trước (để xử lý khi tab bị đóng băng)
-            // Giới hạn tối đa 1 lần tính là 60 giây để tránh lỗi số quá lớn nếu treo máy quá lâu
             const elapsed = Math.min(now - gameData.lastTick, 60000); 
-            const multiplier = elapsed / TICK_RATE_MS; // Hệ số nhân nếu bị lag
+            const multiplier = elapsed / TICK_RATE_MS;
             gameData.lastTick = now;
 
             const level = gameData.player.level;
-            
-            // === CÔNG THỨC TÍNH EXP TREO MÁY ===
-            // Mục tiêu: Khoảng 300-600 giây (5-10 phút) để lên 1 cấp ở các cấp độ đầu
             const currentMaxExp = getMaxExp(level);
-            let expGainPerSec = Math.ceil(currentMaxExp / 450); // Cơ bản: 450 giây (7.5 phút) 1 cấp
-            // Đảm bảo tối thiểu nhận 1 EXP
-            if (expGainPerSec < 1) expGainPerSec = 1; 
             
+            // EXP Gain
+            let expGainPerSec = Math.ceil(currentMaxExp / 450); 
+            if (expGainPerSec < 1) expGainPerSec = 1;
             const totalExpGain = Math.floor(expGainPerSec * multiplier);
 
-            // === CÔNG THỨC TÍNH LINH THẠCH TREO MÁY ===
-            // Mỗi giây nhận: (Level / 3) + 1 linh thạch. Level 1 nhận 1, Level 30 nhận 11.
+            // Stone Gain
             const stoneGainPerSec = Math.floor(level / 3) + 1;
             const totalStoneGain = Math.floor(stoneGainPerSec * multiplier);
 
-            // Cộng tài nguyên
             gameData.player.exp += totalExpGain;
             gameData.resources.spirit_stones += totalStoneGain;
 
-            // Xử lý Đột phá tự động
+            // Level Up Check
             let maxExp = getMaxExp(gameData.player.level);
-            let leveledUp = false;
             while (gameData.player.exp >= maxExp && gameData.player.level < 225) {
                 gameData.player.exp -= maxExp;
                 gameData.player.level++;
+                gameData.player.potentialPoints += 10; // CỘNG 10 ĐIỂM TIỀM NĂNG
                 maxExp = getMaxExp(gameData.player.level);
-                leveledUp = true;
             }
 
-            // Lưu dữ liệu mỗi tick (Tần suất cao nhưng an toàn cho webgame nhỏ)
             saveToLocalStorage();
-            
-            // Cập nhật UI (chỉ cần cập nhật thanh EXP, tên cảnh giới, số đá)
-            updateDynamicUI(); 
-
-            // Hiển thị thông báo nếu lên cấp (Tùy chọn, có thể gây phiền nếu treo máy lâu)
-            // if (leveledUp) console.log("Đột phá thành công lên level " + gameData.player.level);
+            updateDynamicUI(expGainPerSec, stoneGainPerSec);
         }
 
-        // --- GAME FLOW & DATA ---
+        // --- DATA MANAGEMENT ---
         window.onload = function() { checkAutoSave(); };
         function checkAutoSave() {
             const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -214,80 +325,213 @@
                 if (saved) { gameData = mergeData(saved); enterGame(); }
             } catch (e) { alert("Save lỗi!"); initDefaultData(); }
         }
-        // Hàm gộp dữ liệu cũ vào cấu trúc mới nếu có update
+        
         function mergeData(oldData) {
-             const newData = initDefaultData(true); // Lấy cấu trúc chuẩn
-             // Merge đè dữ liệu cũ lên
-             newData.player = { ...newData.player, ...oldData.player };
-             newData.resources = { ...newData.resources, ...oldData.resources };
-             newData.lastTick = Date.now(); // Reset lastTick để tránh bug thời gian
-             return newData;
+            const newData = initDefaultData(true);
+            newData.player = { ...newData.player, ...oldData.player };
+            // Merge deep objects carefully
+            if (oldData.player.attributes) newData.player.attributes = oldData.player.attributes;
+            if (oldData.player.equipped) newData.player.equipped = oldData.player.equipped;
+            if (oldData.player.potentialPoints !== undefined) newData.player.potentialPoints = oldData.player.potentialPoints;
+            
+            newData.resources = { ...newData.resources, ...oldData.resources };
+            newData.lastTick = Date.now();
+            return newData;
         }
+
         function initDefaultData(returnDataOnly = false) {
             const data = {
-                player: { name: 'Vô Danh', level: 1, exp: 0 },
-                resources: { gold: 0, spirit_stones: 0 }, // Thêm linh thạch
-                lastTick: Date.now(), // Thời điểm cuối cùng game chạy
+                player: { 
+                    name: 'Vô Danh', level: 1, exp: 0,
+                    potentialPoints: 0,
+                    attributes: { body: 0, strength: 0, bone: 0, agility: 0 },
+                    equipped: { than_binh: null, huyen_quan: null, linh_giap: null, huyen_quan_leg: null, than_hai: null, nhan_trai: null, nhan_phai: null, ngoc_boi: null }
+                },
+                resources: { gold: 0, spirit_stones: 0 },
+                lastTick: Date.now(),
                 lastSaved: Date.now()
             };
             if (returnDataOnly) return data;
             gameData = data;
         }
+
         function saveToLocalStorage() { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameData)); }
-        
+
+        // --- UI & INTERACTION ---
         function enterGame() {
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
-            gameData.lastTick = Date.now(); // Đặt lại mốc thời gian khi bắt đầu vào
+            gameData.lastTick = Date.now();
             updateFullUI();
-            startGameLoop(); // Bắt đầu auto
+            startGameLoop();
         }
+
         function returnToMenu() {
-            stopGameLoop(); // Dừng auto
+            stopGameLoop();
             saveToLocalStorage();
             document.getElementById('game-container').classList.add('hidden');
             document.getElementById('main-menu').classList.remove('hidden');
             checkAutoSave();
         }
 
-        // --- UI HELPER ---
-        // Cập nhật toàn bộ UI (khi mới vào game)
         function updateFullUI() {
-            updateDynamicUI();
+            updateDynamicUI(0, 0); // Init param
         }
-        // Chỉ cập nhật những thứ thay đổi liên tục
-        function updateDynamicUI() {
+
+        function updateDynamicUI(expRate, stoneRate) {
             const p = gameData.player;
             const maxExp = getMaxExp(p.level);
             
             document.getElementById('display-name').innerText = p.name;
             document.getElementById('display-realm').innerText = getRealmName(p.level);
-            // Cập nhật Linh Thạch
             document.getElementById('display-stones').innerText = formatNumber(gameData.resources.spirit_stones);
             
             const percent = Math.min(100, (p.exp / maxExp) * 100);
             document.getElementById('exp-bar').style.width = `${percent}%`;
             document.getElementById('exp-text').innerText = `${formatNumber(p.exp)} / ${formatNumber(maxExp)}`;
             
-            // Cập nhật text hiển thị tốc độ
-            const expGain = Math.ceil(maxExp / 450);
-            const stoneGain = Math.floor(p.level / 3) + 1;
-            document.getElementById('gain-rate-text').innerText = `(+${formatNumber(expGain)} EXP & +${formatNumber(stoneGain)} Linh thạch mỗi giây)`;
+            if(expRate > 0) {
+                 document.getElementById('gain-rate-text').innerText = `(+${formatNumber(expRate)} EXP & +${formatNumber(stoneRate)} Linh thạch / giây)`;
+            }
+
+            // Noti dot
+            const notiChar = document.getElementById('noti-char');
+            if (p.potentialPoints > 0) notiChar.classList.remove('hidden');
+            else notiChar.classList.add('hidden');
+
+            // Update Modal if open
+            if (!document.getElementById('modal-character').classList.contains('hidden')) {
+                renderAttributes();
+                renderDetailedStats(); // Realtime update stats in modal
+            }
         }
+
+        // --- CHARACTER MODAL LOGIC ---
+        function openCharacterModal() {
+            renderEquipSlots();
+            renderAttributes();
+            renderDetailedStats();
+            document.getElementById('modal-character').classList.remove('hidden');
+        }
+        function closeCharacterModal() {
+            document.getElementById('modal-character').classList.add('hidden');
+        }
+        
+        function switchCharTab(tabName) {
+            // Style buttons
+            const btnEquip = document.getElementById('tab-btn-equip');
+            const btnStats = document.getElementById('tab-btn-stats');
+            const contentEquip = document.getElementById('tab-content-equip');
+            const contentStats = document.getElementById('tab-content-stats');
+
+            if (tabName === 'equip') {
+                btnEquip.className = "flex-1 py-3 text-sm font-bold text-yellow-500 border-b-2 border-yellow-500 bg-gray-800 transition";
+                btnStats.className = "flex-1 py-3 text-sm font-bold text-gray-400 hover:text-gray-200 transition";
+                contentEquip.classList.remove('hidden');
+                contentStats.classList.add('hidden');
+            } else {
+                btnEquip.className = "flex-1 py-3 text-sm font-bold text-gray-400 hover:text-gray-200 transition";
+                btnStats.className = "flex-1 py-3 text-sm font-bold text-yellow-500 border-b-2 border-yellow-500 bg-gray-800 transition";
+                contentEquip.classList.add('hidden');
+                contentStats.classList.remove('hidden');
+                renderDetailedStats();
+            }
+        }
+
+        function renderEquipSlots() {
+            const container = document.getElementById('equip-slots-container');
+            container.innerHTML = '';
+            EQUIP_SLOTS_DEF.forEach(slot => {
+                const item = gameData.player.equipped[slot.id];
+                container.innerHTML += `
+                    <div class="aspect-square bg-gray-800 border border-gray-600 rounded flex flex-col items-center justify-center relative group hover:border-yellow-500 cursor-pointer transition">
+                        <i class="fa-solid ${slot.icon} text-2xl ${item ? 'text-yellow-400' : 'text-gray-600'}"></i>
+                        <span class="text-[10px] text-gray-400 mt-1 uppercase">${slot.name}</span>
+                        ${item ? `<div class="absolute inset-0 bg-yellow-500/10 rounded"></div>` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        function renderAttributes() {
+            const container = document.getElementById('attributes-list');
+            document.getElementById('val-potential').innerText = gameData.player.potentialPoints;
+            
+            container.innerHTML = '';
+            ATTRIBUTES_DEF.forEach(attr => {
+                const currentVal = gameData.player.attributes[attr.id];
+                container.innerHTML += `
+                    <div class="bg-gray-800 p-2 rounded flex items-center justify-between border border-gray-700">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-gray-200">${attr.name}</span>
+                            <span class="text-[10px] text-gray-500">${attr.desc}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-yellow-500 font-mono font-bold text-lg">${currentVal}</span>
+                            <button onclick="addPoint('${attr.id}')" class="w-8 h-8 bg-blue-700 hover:bg-blue-600 rounded text-white font-bold flex items-center justify-center ${gameData.player.potentialPoints > 0 ? '' : 'opacity-50 cursor-not-allowed'}">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function addPoint(attrId) {
+            if (gameData.player.potentialPoints > 0) {
+                gameData.player.potentialPoints--;
+                gameData.player.attributes[attrId]++;
+                saveToLocalStorage();
+                renderAttributes(); // Re-render UI
+            }
+        }
+
+        function renderDetailedStats() {
+            const stats = calculateStats();
+            const container = document.getElementById('detailed-stats-container');
+            
+            const list = [
+                { name: "Sinh Lực (HP)", val: stats.hp_final, sub: `(Gốc: ${stats.hp} | +${stats.hp_percent.toFixed(2)}%)` },
+                { name: "Tấn Công", val: stats.attack },
+                { name: "Phòng Thủ", val: stats.defense },
+                { name: "Tốc Độ", val: stats.speed_final, sub: `(Gốc: ${stats.speed} | +${stats.speed_percent.toFixed(2)}%)` },
+                { name: "Tỉ Lệ Bạo Kích", val: stats.crit_rate.toFixed(2) + "%" },
+                { name: "Sát Thương Bạo", val: stats.crit_dmg.toFixed(2) + "%" },
+                { name: "Kháng Bạo Kích", val: stats.crit_resist.toFixed(2) + "%" },
+                { name: "Kháng ST Bạo", val: stats.crit_dmg_resist.toFixed(2) + "%" },
+                { name: "Chính Xác", val: stats.accuracy.toFixed(2) + "%" },
+                { name: "Né Tránh", val: stats.dodge.toFixed(2) + "%" },
+                { name: "Phản Kích", val: stats.counter_rate.toFixed(2) + "%" },
+                { name: "ST Phản Kích", val: stats.counter_dmg.toFixed(2) + "%" },
+                { name: "Liên Kích", val: stats.combo.toFixed(2) + "%" },
+                { name: "Kháng Liên Kích", val: stats.combo_resist.toFixed(2) + "%" },
+                { name: "Kháng Hút Máu", val: stats.vamp_resist.toFixed(2) + "%" }
+            ];
+
+            container.innerHTML = list.map(s => `
+                <div class="flex justify-between border-b border-gray-700 pb-1">
+                    <span class="text-gray-400">${s.name}</span>
+                    <div class="text-right">
+                        <span class="text-gray-200 font-bold">${s.val}</span>
+                        ${s.sub ? `<div class="text-[10px] text-gray-600">${s.sub}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
         function formatNumber(num) {
             if (num >= 1000000000) return (num / 1000000000).toFixed(2) + " Tỷ";
             if (num >= 1000000) return (num / 1000000).toFixed(2) + " Triệu";
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // --- SAVE FILE ---
+        // Save/Load File Logic (Keep existing)
         function triggerFileInput() { document.getElementById('file-upload').click(); }
         function handleFileUpload(input) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
-                try { gameData = mergeData(JSON.parse(e.target.result)); saveToLocalStorage(); enterGame(); alert("Tải thành công!"); } catch (err) { alert("File lỗi!"); }
-            }; reader.readAsText(file); input.value = '';
+            reader.onload = function(e) { try { gameData = mergeData(JSON.parse(e.target.result)); saveToLocalStorage(); enterGame(); alert("Tải thành công!"); } catch (err) { alert("File lỗi!"); } };
+            reader.readAsText(file); input.value = '';
         }
         function exportSaveFile() {
             gameData.lastSaved = new Date().toLocaleString();
