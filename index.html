@@ -36,10 +36,10 @@
         .toast { background: rgba(15, 23, 42, 0.95); border: 1px solid #475569; padding: 12px 20px; border-radius: 8px; color: white; animation: slideIn 0.3s ease-out; pointer-events: auto; max-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-size: 13px; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        .combat-log p { margin-bottom: 4px; border-bottom: 1px solid #334155; padding-bottom: 2px; }
+        .combat-log p { margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; line-height: 1.4; }
         .log-player { color: #4ade80; }
         .log-enemy { color: #f87171; }
-        .log-info { color: #fbbf24; font-weight: bold; }
+        .log-info { color: #fbbf24; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 5px; border-radius: 4px; text-align: center; }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -56,21 +56,7 @@
             <button onclick="newGame()" class="py-3 bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 rounded font-bold">Chơi Mới</button>
             <button onclick="triggerFileInput()" class="py-3 bg-blue-900 border border-blue-700 hover:bg-blue-800 text-blue-100 rounded font-bold">Tải Save</button>
         </div>
-        <div class="text-xs text-gray-600 mt-8">Ver 1.6.0 - Tháp Vô Tận & Ngọc</div>
-    </div>
-
-    <div id="modal-selection" class="hidden fixed inset-0 bg-black z-[100] flex items-center justify-center p-4">
-        <div class="bg-gray-900 w-full max-w-4xl h-[90vh] border border-yellow-600 rounded-lg flex flex-col shadow-2xl relative">
-            <div class="bg-gray-800 p-4 text-center"><h2 class="text-xl font-bold text-yellow-500">KHỞI ĐẦU ĐẠO LỘ</h2></div>
-            <div class="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4 custom-scroll">
-                <div><h3 class="font-bold text-white mb-2">Chọn Đạo</h3><div id="dao-list" class="space-y-2"></div></div>
-                <div><h3 class="font-bold text-white mb-2">Chọn Căn</h3><div id="root-list" class="space-y-2"></div></div>
-            </div>
-            <div class="p-4 bg-gray-800 flex justify-between items-center">
-                <div class="text-xs text-gray-400">Đạo: <span id="sel-dao-txt" class="text-white">---</span> | Căn: <span id="sel-root-txt" class="text-white">---</span></div>
-                <button onclick="confirmSelection()" id="btn-sel-confirm" class="px-6 py-2 bg-gray-700 text-gray-400 font-bold rounded cursor-not-allowed" disabled>BẮT ĐẦU</button>
-            </div>
-        </div>
+        <div class="text-xs text-gray-600 mt-8">Ver 1.7.0 - Fix Đạo Lộ & Tháp</div>
     </div>
 
     <div id="game-container" class="hidden w-full max-w-4xl h-[90vh] bg-gray-900 border border-gray-700 rounded-xl shadow-2xl relative overflow-hidden flex flex-col">
@@ -133,21 +119,26 @@
     </div>
 
     <script>
-        // --- DATA & CONFIG ---
-        const LOCAL_STORAGE_KEY = 'thien_dao_v1_6';
+        // --- CONFIG & DATA ---
+        const LOCAL_STORAGE_KEY = 'thien_dao_v1_7';
+        
         const DAO_PATHS = {
-            'kiem_tu': { name: 'Kiếm Tu', desc: 'Sát thương cực đại', bonus: 'attack_percent' },
-            'the_tu': { name: 'Thể Tu', desc: 'Máu trâu phản đòn', bonus: 'hp_percent' },
-            'ma_tu': { name: 'Ma Tu', desc: 'Bán máu lấy công', bonus: 'vamp' },
-            'than_tinh': { name: 'Thần Tinh', desc: 'Chí mạng né tránh', bonus: 'crit_rate' },
-            'van_thanh': { name: 'Văn Thánh', desc: 'Toàn diện hỗ trợ', bonus: 'dmg_reduce' },
-            'dao_mon': { name: 'Đạo Môn', desc: 'Thủ cao khiên dày', bonus: 'defense_percent' }
+            'kiem_tu': { name: 'Kiếm Tu', desc: 'Nhất kiếm phá vạn pháp', bonusDesc: '+20% Sát thương, +5% Chí mạng', stats: { attack_percent: 20, crit_rate: 5 } },
+            'the_tu': { name: 'Thể Tu', desc: 'Lấy thân luyện đạo', bonusDesc: '+25% Máu, +5% Phản đòn', stats: { hp_percent: 25, counter_rate: 5 } },
+            'ma_tu': { name: 'Ma Tu', desc: 'Đạo hóa ma tâm', bonusDesc: '+10% Hút máu, +15% Công', stats: { vamp: 10, attack_percent: 15 } },
+            'than_tinh': { name: 'Thần Tinh', desc: 'Mắt thấy chân lý', bonusDesc: '+10% Chí mạng, +10% Né tránh', stats: { crit_rate: 10, dodge: 10 } },
+            'van_thanh': { name: 'Văn Thánh', desc: 'Bút hạ luận thiên hạ', bonusDesc: '+15% Miễn thương, +10% Tốc tu luyện', stats: { dmg_reduce: 15, cult_speed: 10 } },
+            'dao_mon': { name: 'Đạo Môn', desc: 'Vẽ bùa niệm chú', bonusDesc: '+20% Thủ, +10% Máu', stats: { defense_percent: 20, hp_percent: 10 } }
         };
+
         const SPIRIT_ROOTS = {
-            'kim': { name: 'Kim', color: 'text-yellow-400' }, 'moc': { name: 'Mộc', color: 'text-green-400' },
-            'thuy': { name: 'Thủy', color: 'text-blue-400' }, 'hoa': { name: 'Hỏa', color: 'text-red-400' },
-            'tho': { name: 'Thổ', color: 'text-gray-400' }
+            'kim': { name: 'Kim', color: 'text-yellow-400', desc: 'Chủ sát phạt', bonusDesc: '+300 Sát thương Kim, +5% Xuyên giáp' },
+            'moc': { name: 'Mộc', color: 'text-green-400', desc: 'Chủ sinh cơ', bonusDesc: '+300 Hồi phục, +5% Máu' },
+            'thuy': { name: 'Thủy', color: 'text-blue-400', desc: 'Chủ nhu hòa', bonusDesc: '+300 Sát thương Thủy, +5% Né' },
+            'hoa': { name: 'Hỏa', color: 'text-red-400', desc: 'Chủ hủy diệt', bonusDesc: '+300 Sát thương Hỏa, +5% Công' },
+            'tho': { name: 'Thổ', color: 'text-gray-400', desc: 'Chủ phòng ngự', bonusDesc: '+300 Thủ, +5% Kháng bạo' }
         };
+
         const GEM_TYPES = [
             { id: 'gem_atk', name: 'Hồng Ngọc', stat: 'attack', val: 50, desc: 'Công' },
             { id: 'gem_hp', name: 'Hoàng Ngọc', stat: 'hp', val: 500, desc: 'Máu' },
@@ -157,29 +148,28 @@
         ];
 
         let gameData = {};
-        let tempSel = { dao: null, root: null };
         let gameLoopInt = null;
         let selectedItem = null;
 
         // --- CORE FUNCTIONS ---
         function getMaxExp(lv) { return lv >= 225 ? 42000000000 : Math.floor(100 * Math.pow(1.0933405, lv - 1)); }
-        
+
         function calculateStats(entity = 'player', enemyFloor = 0) {
             if (entity === 'enemy') {
-                // Enemy Scaling: Floor 1 -> 3000
-                const mult = 1 + (enemyFloor * 0.2); // Tăng 20% mỗi tầng
+                const mult = 1 + (enemyFloor * 0.15); 
                 return {
-                    hp: Math.floor(1000 * mult), maxHp: Math.floor(1000 * mult),
-                    attack: Math.floor(50 * mult),
-                    defense: Math.floor(10 * mult),
-                    speed: Math.floor(10 + enemyFloor),
-                    crit_rate: Math.min(50, enemyFloor * 0.5),
+                    hp: Math.floor(1500 * mult), maxHp: Math.floor(1500 * mult),
+                    attack: Math.floor(80 * mult),
+                    defense: Math.floor(20 * mult),
+                    speed: Math.floor(20 + enemyFloor),
+                    crit_rate: Math.min(30, enemyFloor * 0.2),
                     name: `Yêu Thú Tầng ${enemyFloor}`
                 };
             }
 
             const p = gameData.player;
-            let s = { attack: 100, hp: 1000, defense: 20, speed: 100, crit_rate: 0, crit_dmg: 150, vamp: 0, dmg_reduce: 0 };
+            // Base Stats
+            let s = { attack: 100, hp: 1000, defense: 20, speed: 100, crit_rate: 0, crit_dmg: 150, vamp: 0, dmg_reduce: 0, cult_speed: 0 };
             
             // 1. Attributes
             s.hp += (p.attributes.body||0) * 120;
@@ -187,7 +177,16 @@
             s.defense += (p.attributes.bone||0) * 16;
             s.speed += (p.attributes.agility||0) * 6;
 
-            // 2. Equipments
+            // 2. Dao Path & Spirit Root (Null Check)
+            if (p.daoPath && DAO_PATHS[p.daoPath]) {
+                const dStats = DAO_PATHS[p.daoPath].stats;
+                Object.entries(dStats).forEach(([k,v]) => {
+                    if (s[k] !== undefined) s[k] += v; // Flat addition for simplicity in pct
+                    else s[k] = v;
+                });
+            }
+
+            // 3. Equipments
             Object.values(p.equipped).forEach(it => {
                 if(!it) return;
                 const mul = (1 + it.enhanceLv*0.1) * (1 + it.starLv*0.2);
@@ -195,19 +194,19 @@
                 it.options.forEach(o => s[o.stat] = (s[o.stat]||0) + o.val);
                 it.sockets.forEach(g => {
                     if(g) {
-                        const baseVal = GEM_TYPES.find(gt => gt.id === g.type).val;
-                        // Gem scaling: Base * Level
-                        const finalVal = baseVal * g.level;
-                        const statName = GEM_TYPES.find(gt => gt.id === g.type).stat;
-                        s[statName] = (s[statName]||0) + finalVal;
+                        const baseInfo = GEM_TYPES.find(gt => gt.id === g.type);
+                        if(baseInfo) {
+                            const finalVal = baseInfo.val * g.level;
+                            s[baseInfo.stat] = (s[baseInfo.stat]||0) + finalVal;
+                        }
                     }
                 });
             });
 
-            // 3. Dao/Root Bonuses (Simplified)
-            if(p.daoPath === 'kiem_tu') s.attack = Math.floor(s.attack * 1.05);
-            if(p.daoPath === 'the_tu') s.hp = Math.floor(s.hp * 1.2);
-            // ... add more logic if needed
+            // Handle Percentages (Simple logic)
+            if(s.attack_percent) s.attack = Math.floor(s.attack * (1 + s.attack_percent/100));
+            if(s.hp_percent) s.hp = Math.floor(s.hp * (1 + s.hp_percent/100));
+            if(s.defense_percent) s.defense = Math.floor(s.defense * (1 + s.defense_percent/100));
 
             s.maxHp = s.hp;
             return s;
@@ -222,12 +221,14 @@
                 gameData.lastTick = now;
 
                 const p = gameData.player;
+                const s = calculateStats();
+                
                 // Idle Gains
                 const stoneGain = Math.floor((Math.floor(p.level/3)+1) * diff);
                 gameData.resources.spirit_stones += stoneGain;
                 
                 const maxExp = getMaxExp(p.level);
-                let expGain = Math.floor((maxExp / 450) * diff);
+                let expGain = Math.floor((maxExp / 450) * diff * (1 + (s.cult_speed||0)/100));
                 if(expGain < 1) expGain = 1;
                 p.exp += expGain;
 
@@ -249,42 +250,38 @@
             }, 1000);
         }
 
-        // --- ITEM SYSTEM ---
+        // --- ITEM GENERATION ---
         function generateItem(lv) {
             const rand = Math.random();
-            // 20% Gem/Mat, 80% Equip
             if(rand < 0.2) {
-                // Mats
                 if(Math.random() < 0.5) {
                     const mats = ['stone_enhance','stone_refine','stone_star'];
                     const m = mats[Math.floor(Math.random()*mats.length)];
                     return { isEquip: false, type: 'material', id: m, name: (m==='stone_enhance'?'Đá Cường Hóa':m==='stone_refine'?'Đá Tẩy Luyện':'Đá Thăng Tinh'), count: 1, desc: 'Nguyên liệu' };
                 } else {
-                    // Gems (Lv1)
                     const g = GEM_TYPES[Math.floor(Math.random()*GEM_TYPES.length)];
-                    return { isEquip: false, type: 'gem', gemType: g.id, level: 1, name: `${g.name} Cấp 1`, count: 1, desc: g.desc };
+                    return { isEquip: false, type: 'gem', gemType: g.id, level: 1, name: `${g.name} Cấp 1`, count: 1, desc: `+${g.val} ${g.desc}` };
                 }
             } else {
-                // Equips
                 const slots = ['than_binh','huyen_quan','linh_giap','huyen_quan_leg','than_hai','nhan_trai','nhan_phai','ngoc_boi'];
                 const slot = slots[Math.floor(Math.random()*slots.length)];
-                const qRand = Math.random();
                 let q = 0;
+                const qRand = Math.random();
                 if(qRand < 0.005) q=5; else if(qRand < 0.02) q=4; else if(qRand < 0.1) q=3; else if(qRand < 0.3) q=2; else if(qRand < 0.6) q=1;
                 
                 const names = {'than_binh':'Kiếm','huyen_quan':'Mũ','linh_giap':'Áo','huyen_quan_leg':'Quần','than_hai':'Giày','nhan_trai':'Nhẫn','nhan_phai':'Nhẫn','ngoc_boi':'Ngọc'};
-                const baseVal = lv * (q+1) * 2;
+                const baseVal = lv * (q+1) * 3;
                 
                 let stats = {};
                 if(slot.includes('binh') || slot.includes('nhan')) stats.attack = baseVal;
-                else if(slot.includes('giap') || slot.includes('leg')) stats.hp = baseVal * 10;
+                else if(slot.includes('giap') || slot.includes('leg')) stats.hp = baseVal * 12;
                 else stats.defense = Math.floor(baseVal / 2);
 
                 let opts = [];
                 for(let i=0; i<=q; i++) {
                     const types = ['attack','hp','defense','crit_rate','speed'];
                     const t = types[Math.floor(Math.random()*types.length)];
-                    opts.push({ stat: t, val: Math.floor(baseVal * 0.2) });
+                    opts.push({ stat: t, val: Math.floor(baseVal * 0.25) });
                 }
 
                 return {
@@ -306,7 +303,7 @@
             }
         }
 
-        // --- UI & MODALS ---
+        // --- UI UPDATES ---
         function updateUI() {
             const p = gameData.player;
             document.getElementById('display-name').innerText = p.name;
@@ -317,7 +314,6 @@
             document.getElementById('exp-bar').style.width = Math.min(100, (p.exp/max)*100) + '%';
             document.getElementById('exp-text').innerText = `${p.exp.toLocaleString()} / ${max.toLocaleString()}`;
 
-            // Dots
             document.getElementById('noti-inv').className = gameData.inventory.equips.length > 0 ? "absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" : "hidden";
         }
 
@@ -334,7 +330,6 @@
             document.getElementById('modal-overlay').classList.remove('hidden');
             const content = document.getElementById('modal-content');
             content.innerHTML = '';
-            
             if(type === 'character') renderCharacter(content);
             else if(type === 'inventory') renderInventory(content);
             else if(type === 'blacksmith') renderBlacksmith(content);
@@ -345,7 +340,105 @@
             document.getElementById('modal-overlay').classList.add('hidden');
         }
 
-        // --- INVENTORY LOGIC (BULK SELL) ---
+        // --- CHARACTER MODAL (NEW: SELECT DAO/ROOT) ---
+        function renderCharacter(c) {
+            const p = gameData.player;
+            const hasDao = p.daoPath && DAO_PATHS[p.daoPath];
+            const hasRoot = p.spiritRoot && SPIRIT_ROOTS[p.spiritRoot];
+
+            c.innerHTML = `
+                <div class="p-3 bg-gray-800 flex justify-between items-center border-b border-gray-700">
+                    <h3 class="font-bold text-yellow-500">NHÂN VẬT</h3>
+                    <button onclick="closeModal()"><i class="fa-solid fa-times text-gray-400"></i></button>
+                </div>
+                <div class="flex border-b border-gray-700">
+                    <button onclick="renderCharTab('stats')" id="btn-char-stats" class="flex-1 py-2 text-sm font-bold bg-gray-700 text-yellow-500">Thuộc Tính</button>
+                    <button onclick="renderCharTab('dao')" id="btn-char-dao" class="flex-1 py-2 text-sm font-bold bg-gray-800 text-gray-400">Đạo & Căn</button>
+                </div>
+                <div id="char-content" class="flex-1 overflow-y-auto p-4 custom-scroll"></div>
+            `;
+            renderCharTab('stats');
+        }
+
+        function renderCharTab(tab) {
+            const content = document.getElementById('char-content');
+            document.getElementById('btn-char-stats').className = `flex-1 py-2 text-sm font-bold ${tab==='stats'?'bg-gray-700 text-yellow-500':'bg-gray-800 text-gray-400'}`;
+            document.getElementById('btn-char-dao').className = `flex-1 py-2 text-sm font-bold ${tab==='dao'?'bg-gray-700 text-yellow-500':'bg-gray-800 text-gray-400'}`;
+            
+            if (tab === 'stats') {
+                const s = calculateStats();
+                content.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-300">
+                        <div class="bg-gray-800 p-2 rounded">Máu: <span class="text-white">${s.maxHp}</span></div>
+                        <div class="bg-gray-800 p-2 rounded">Công: <span class="text-white">${s.attack}</span></div>
+                        <div class="bg-gray-800 p-2 rounded">Thủ: <span class="text-white">${s.defense}</span></div>
+                        <div class="bg-gray-800 p-2 rounded">Tốc: <span class="text-white">${s.speed}</span></div>
+                        <div class="bg-gray-800 p-2 rounded">Chí Mạng: <span class="text-white">${s.crit_rate}%</span></div>
+                        <div class="bg-gray-800 p-2 rounded">Hút Máu: <span class="text-white">${s.vamp}%</span></div>
+                    </div>
+                `;
+            } else {
+                // Dao & Root Selection/Info
+                const p = gameData.player;
+                if (!p.daoPath || !p.spiritRoot) {
+                    content.innerHTML = `<h4 class="text-center text-white mb-4">CHỌN CON ĐƯỜNG TU LUYỆN</h4>`;
+                    
+                    // Dao Selector
+                    content.innerHTML += `<div class="mb-4"><h5 class="text-yellow-500 font-bold mb-2">Đạo Lộ</h5><div class="grid grid-cols-2 gap-2">`;
+                    Object.entries(DAO_PATHS).forEach(([k, v]) => {
+                         content.innerHTML += `<div onclick="chooseDao('${k}')" class="bg-gray-800 p-2 rounded border border-gray-600 hover:border-yellow-500 cursor-pointer ${p.daoPath===k?'border-yellow-500':''}">
+                            <div class="font-bold text-sm">${v.name}</div>
+                            <div class="text-[10px] text-gray-400">${v.bonusDesc}</div>
+                         </div>`;
+                    });
+                    content.innerHTML += `</div></div>`;
+
+                    // Root Selector
+                    content.innerHTML += `<div class="mb-4"><h5 class="text-blue-500 font-bold mb-2">Linh Căn</h5><div class="grid grid-cols-2 gap-2">`;
+                    Object.entries(SPIRIT_ROOTS).forEach(([k, v]) => {
+                         content.innerHTML += `<div onclick="chooseRoot('${k}')" class="bg-gray-800 p-2 rounded border border-gray-600 hover:border-blue-500 cursor-pointer ${p.spiritRoot===k?'border-blue-500':''}">
+                            <div class="font-bold text-sm ${v.color}">${v.name}</div>
+                            <div class="text-[10px] text-gray-400">${v.bonusDesc}</div>
+                         </div>`;
+                    });
+                    content.innerHTML += `</div></div>`;
+                    
+                    content.innerHTML += `<button onclick="saveDaoChoice()" class="w-full bg-green-700 py-2 rounded font-bold text-white mt-2">XÁC NHẬN CHỌN</button>`;
+                } else {
+                    // Show Info
+                    const d = DAO_PATHS[p.daoPath];
+                    const r = SPIRIT_ROOTS[p.spiritRoot];
+                    content.innerHTML = `
+                        <div class="bg-gray-800 p-4 rounded mb-4 border border-yellow-600">
+                            <h3 class="text-xl font-bold text-yellow-500 mb-2">${d.name}</h3>
+                            <p class="text-gray-300 italic mb-2">"${d.desc}"</p>
+                            <div class="text-green-400 text-sm font-bold">Hiệu quả: ${d.bonusDesc}</div>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded border border-blue-600">
+                            <h3 class="text-xl font-bold ${r.color} mb-2">${r.name} Linh Căn</h3>
+                            <p class="text-gray-300 italic mb-2">"${r.desc}"</p>
+                            <div class="text-green-400 text-sm font-bold">Hiệu quả: ${r.bonusDesc}</div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        let tempDao = null;
+        let tempRoot = null;
+        function chooseDao(k) { tempDao = k; gameData.player.daoPath = k; renderCharTab('dao'); }
+        function chooseRoot(k) { tempRoot = k; gameData.player.spiritRoot = k; renderCharTab('dao'); }
+        function saveDaoChoice() {
+            if(gameData.player.daoPath && gameData.player.spiritRoot) {
+                saveData();
+                showToast("Đã chọn Đạo & Căn!", "gold");
+                renderCharTab('dao');
+            } else {
+                showToast("Vui lòng chọn cả hai!");
+            }
+        }
+
+        // --- INVENTORY ---
         function renderInventory(c) {
             c.innerHTML = `
                 <div class="p-3 bg-gray-800 flex justify-between items-center border-b border-gray-700">
@@ -356,15 +449,12 @@
                     <button onclick="renderInvList(true)" class="flex-1 py-2 text-sm font-bold bg-gray-700 text-white">Trang Bị</button>
                     <button onclick="renderInvList(false)" class="flex-1 py-2 text-sm font-bold bg-gray-800 text-gray-400">Vật Phẩm</button>
                 </div>
-                
                 <div class="p-2 bg-gray-800 flex gap-2 overflow-x-auto text-[10px]">
                     <span class="text-gray-400 py-1">Bán Nhanh:</span>
                     <button onclick="bulkSell(0)" class="px-2 py-1 bg-gray-600 rounded">Phàm</button>
                     <button onclick="bulkSell(1)" class="px-2 py-1 bg-green-900 rounded text-green-200">Khá</button>
                     <button onclick="bulkSell(2)" class="px-2 py-1 bg-blue-900 rounded text-blue-200">Tốt</button>
-                    <button onclick="bulkSell(3)" class="px-2 py-1 bg-purple-900 rounded text-purple-200">Hiếm</button>
                 </div>
-
                 <div id="inv-list" class="flex-1 overflow-y-auto p-2 grid grid-cols-5 gap-2 content-start custom-scroll"></div>
                 <div id="inv-detail" class="h-32 bg-gray-800 border-t border-gray-700 p-2 text-xs"></div>
             `;
@@ -374,7 +464,6 @@
         function renderInvList(isEquip) {
             const list = document.getElementById('inv-list');
             list.innerHTML = '';
-            
             const arr = isEquip ? gameData.inventory.equips : gameData.inventory.items;
             arr.forEach((it, idx) => {
                 const color = isEquip ? `q-${it.quality}` : 'text-white';
@@ -389,9 +478,7 @@
 
         function selectInvItem(idx, isEquip) {
             const it = isEquip ? gameData.inventory.equips[idx] : gameData.inventory.items[idx];
-            selectedItem = { item: it, idx: idx, isEquip: isEquip };
             const d = document.getElementById('inv-detail');
-            
             if(isEquip) {
                 let stats = Object.entries(it.baseStats).map(([k,v]) => `${k}: +${v}`).join(', ');
                 d.innerHTML = `
@@ -403,7 +490,7 @@
                         </div>
                         <div class="flex flex-col gap-1 justify-center">
                             <button onclick="doEquip(${idx})" class="bg-green-700 text-white px-3 py-1 rounded">Mặc</button>
-                            <button onclick="doSellOne(${idx}, true)" class="bg-red-800 text-white px-3 py-1 rounded">Bán</button>
+                            <button onclick="doSellOne(${idx})" class="bg-red-800 text-white px-3 py-1 rounded">Bán</button>
                         </div>
                     </div>`;
             } else {
@@ -413,24 +500,20 @@
                          <div class="flex-1">
                             <div class="font-bold text-white">${it.name}</div>
                             <div class="italic text-gray-400">${it.desc}</div>
-                             ${it.type==='gem' ? `<div class="text-yellow-500 mt-1">Chỉ số: +${GEM_TYPES.find(g=>g.id===it.gemType).val * it.level} ${GEM_TYPES.find(g=>g.id===it.gemType).desc}</div>` : ''}
                         </div>
                     </div>`;
             }
         }
-
         function bulkSell(q) {
             const oldLen = gameData.inventory.equips.length;
             gameData.inventory.equips = gameData.inventory.equips.filter(it => it.quality !== q);
             const sold = oldLen - gameData.inventory.equips.length;
             if(sold > 0) {
-                const stones = sold * (q+1) * 100;
-                gameData.resources.spirit_stones += stones;
-                showToast(`Đã bán ${sold} trang bị, nhận ${stones} linh thạch`);
+                gameData.resources.spirit_stones += sold * (q+1) * 100;
+                showToast(`Đã bán ${sold} trang bị`);
                 renderInvList(true);
-            } else showToast("Không có trang bị phù hợp");
+            }
         }
-        
         function doEquip(idx) {
             const item = gameData.inventory.equips[idx];
             const slot = item.type;
@@ -441,7 +524,6 @@
             showToast("Đã trang bị!");
             renderInvList(true);
         }
-        
         function doSellOne(idx) {
             const item = gameData.inventory.equips[idx];
             gameData.resources.spirit_stones += (item.quality+1)*100;
@@ -450,7 +532,7 @@
             document.getElementById('inv-detail').innerHTML = '';
         }
 
-        // --- BLACKSMITH (FUSION & GEM) ---
+        // --- BLACKSMITH ---
         function renderBlacksmith(c) {
             c.innerHTML = `
                 <div class="p-3 bg-gray-800 flex justify-between items-center border-b border-gray-700">
@@ -460,31 +542,26 @@
                 <div class="flex h-full">
                     <div class="w-1/4 bg-gray-800 border-r border-gray-700 p-2 space-y-2">
                         <button onclick="renderGemFuse()" class="w-full text-left p-2 bg-gray-700 rounded text-sm hover:bg-gray-600">Ghép Ngọc</button>
-                        <button onclick="renderEnhanceUI()" class="w-full text-left p-2 bg-gray-700 rounded text-sm hover:bg-gray-600">Cường Hóa</button>
                     </div>
-                    <div id="bs-content" class="flex-1 p-4 bg-gray-900 flex flex-col items-center justify-center">
-                        <div class="text-gray-500">Chọn chức năng bên trái</div>
-                    </div>
+                    <div id="bs-content" class="flex-1 p-4 bg-gray-900 flex flex-col items-center justify-center"></div>
                 </div>
             `;
+            renderGemFuse();
         }
 
         function renderGemFuse() {
             const gems = gameData.inventory.items.filter(i => i.type === 'gem');
             let html = '<h4 class="text-yellow-500 font-bold mb-4">GHÉP NGỌC (3 viên -> 1 viên cấp cao)</h4><div class="grid grid-cols-4 gap-2 w-full">';
-            
             gems.sort((a,b) => (a.gemType+a.level).localeCompare(b.gemType+b.level));
-            
             gems.forEach(g => {
                 const canFuse = g.count >= 3 && g.level < 10;
-                const baseInfo = GEM_TYPES.find(x => x.id === g.gemType);
-                const statVal = baseInfo.val * g.level;
-                
+                const base = GEM_TYPES.find(x => x.id === g.gemType);
+                const statVal = base.val * g.level;
                 html += `
                 <div class="bg-gray-800 p-2 rounded border border-gray-600 flex flex-col items-center relative">
-                    <i class="fa-solid fa-gem text-2xl mb-1 ${baseInfo.id.includes('atk')?'text-red-400':baseInfo.id.includes('hp')?'text-yellow-400':'text-blue-400'}"></i>
+                    <i class="fa-solid fa-gem text-2xl mb-1 ${base.id.includes('atk')?'text-red-400':base.id.includes('hp')?'text-yellow-400':'text-blue-400'}"></i>
                     <div class="text-xs font-bold text-center">${g.name}</div>
-                    <div class="text-[9px] text-gray-400">+${statVal} ${baseInfo.desc}</div>
+                    <div class="text-[9px] text-gray-400">+${statVal} ${base.desc}</div>
                     <div class="text-xs mt-1">SL: ${g.count}</div>
                     ${canFuse ? `<button onclick="doFuse('${g.id}', ${g.level}, '${g.gemType}')" class="mt-2 bg-green-700 text-white text-[10px] px-2 py-1 rounded w-full">Ghép</button>` : ''}
                 </div>`;
@@ -497,22 +574,17 @@
             if(it && it.count >= 3) {
                 it.count -= 3;
                 if(it.count === 0) gameData.inventory.items = gameData.inventory.items.filter(i => i !== it);
-                
-                // Add next level
                 const nextLv = lv + 1;
                 const baseName = GEM_TYPES.find(x => x.id === type).name;
-                addItem({ isEquip: false, type: 'gem', gemType: type, level: nextLv, name: `${baseName} Cấp ${nextLv}`, count: 1 });
-                
+                const baseDesc = GEM_TYPES.find(x => x.id === type).desc;
+                const baseVal = GEM_TYPES.find(x => x.id === type).val * nextLv;
+                addItem({ isEquip: false, type: 'gem', gemType: type, level: nextLv, name: `${baseName} Cấp ${nextLv}`, count: 1, desc: `+${baseVal} ${baseDesc}` });
                 showToast("Ghép ngọc thành công!", 'gold');
                 renderGemFuse();
             }
         }
-        
-        function renderEnhanceUI() {
-             document.getElementById('bs-content').innerHTML = '<div class="text-gray-400">Chọn trang bị trong túi để cường hóa (Chưa implement UI này, dùng tính năng mặc định trong túi đồ)</div>';
-        }
 
-        // --- INFINITE TOWER ---
+        // --- TOWER ---
         function renderTower(c) {
             c.innerHTML = `
                 <div class="p-3 bg-gray-800 flex justify-between items-center border-b border-gray-700">
@@ -522,117 +594,87 @@
                 <div class="flex-1 flex flex-col p-4">
                     <div class="text-center mb-6">
                         <div class="text-4xl font-bold text-white mb-2">Tầng ${gameData.tower.floor}</div>
-                        <div class="text-gray-400">Quái vật mạnh lên theo từng tầng. Đánh thắng nhận Điểm Tháp & Linh Thạch.</div>
+                        <div class="text-gray-400">Chiến đấu để nhận Điểm Tháp & Linh Thạch</div>
                     </div>
-                    
                     <div class="grid grid-cols-2 gap-4 mb-6">
-                        <button onclick="startTowerCombat()" class="bg-red-900 hover:bg-red-800 text-white font-bold py-4 rounded border border-red-600 text-xl">
-                            KHIÊU CHIẾN
-                        </button>
-                        <button onclick="renderTowerShop()" class="bg-purple-900 hover:bg-purple-800 text-white font-bold py-4 rounded border border-purple-600 text-xl">
-                            TIỆM THÁP
-                        </button>
+                        <button onclick="startTowerCombat()" class="bg-red-900 hover:bg-red-800 text-white font-bold py-4 rounded border border-red-600 text-xl">KHIÊU CHIẾN</button>
+                        <button onclick="renderTowerShop()" class="bg-purple-900 hover:bg-purple-800 text-white font-bold py-4 rounded border border-purple-600 text-xl">TIỆM THÁP</button>
                     </div>
-
-                    <div id="combat-log" class="flex-1 bg-black border border-gray-700 rounded p-2 overflow-y-auto font-mono text-xs combat-log hidden">
-                        </div>
+                    <div id="combat-log" class="flex-1 bg-black border border-gray-700 rounded p-2 overflow-y-auto font-mono text-xs combat-log hidden"></div>
                 </div>
             `;
         }
-        
+
         function renderTowerShop() {
-            const c = document.getElementById('modal-content');
-            c.innerHTML = `
+             const c = document.getElementById('modal-content');
+             c.innerHTML = `
                  <div class="p-3 bg-gray-800 flex justify-between items-center border-b border-gray-700">
-                    <h3 class="font-bold text-purple-400">TIỆM THÁP (Điểm: ${gameData.tower.points})</h3>
+                    <h3 class="font-bold text-purple-400">TIỆM THÁP (${gameData.tower.points})</h3>
                     <button onclick="openModal('tower')"><i class="fa-solid fa-arrow-left text-gray-400"></i></button>
                 </div>
                 <div class="p-4 grid grid-cols-3 gap-2">
                     ${GEM_TYPES.map(g => `
                         <div class="bg-gray-800 p-2 border border-gray-600 rounded flex flex-col items-center">
-                            <i class="fa-solid fa-gem text-xl mb-1 text-white"></i>
                             <div class="font-bold text-sm text-white">${g.name} Cấp 1</div>
                             <div class="text-xs text-gray-400">+${g.val} ${g.desc}</div>
                             <button onclick="buyGem('${g.id}')" class="mt-2 bg-yellow-700 px-3 py-1 rounded text-xs text-white">Mua (100 Điểm)</button>
                         </div>
                     `).join('')}
-                </div>
-            `;
+                </div>`;
         }
-        
         function buyGem(type) {
             if(gameData.tower.points >= 100) {
                 gameData.tower.points -= 100;
                 const g = GEM_TYPES.find(x => x.id === type);
-                addItem({ isEquip: false, type: 'gem', gemType: type, level: 1, name: `${g.name} Cấp 1`, count: 1, desc: g.desc });
+                addItem({ isEquip: false, type: 'gem', gemType: type, level: 1, name: `${g.name} Cấp 1`, count: 1, desc: `+${g.val} ${g.desc}` });
                 showToast("Mua thành công!");
                 renderTowerShop();
-                saveData();
             } else showToast("Không đủ điểm!");
         }
 
         async function startTowerCombat() {
-            const logBox = document.getElementById('combat-log');
-            logBox.classList.remove('hidden');
-            logBox.innerHTML = '<p class="text-center text-white">--- TRẬN CHIẾN BẮT ĐẦU ---</p>';
-            
+            const log = document.getElementById('combat-log');
+            log.classList.remove('hidden');
+            log.innerHTML = '<p class="text-center text-white">--- TRẬN CHIẾN BẮT ĐẦU ---</p>';
             let pStats = calculateStats('player');
             let eStats = calculateStats('enemy', gameData.tower.floor);
             
             let turn = 1;
             while(pStats.hp > 0 && eStats.hp > 0) {
-                // Sleep for effect
                 await new Promise(r => setTimeout(r, 600)); 
-                
-                // Player Attack
                 const pDmg = Math.max(1, pStats.attack - eStats.defense);
                 eStats.hp -= pDmg;
-                logBox.innerHTML += `<p class="log-player">Turn ${turn}: Bạn đánh ${eStats.name} mất ${pDmg} máu. (Địch còn ${eStats.hp})</p>`;
-                logBox.scrollTop = logBox.scrollHeight;
-
+                log.innerHTML += `<p class="log-player">T${turn}: Bạn đánh ${eStats.name} -${pDmg} HP. (Địch: ${eStats.hp})</p>`;
+                log.scrollTop = log.scrollHeight;
                 if(eStats.hp <= 0) break;
 
-                // Enemy Attack
                 const eDmg = Math.max(1, eStats.attack - pStats.defense);
                 pStats.hp -= eDmg;
-                logBox.innerHTML += `<p class="log-enemy">Turn ${turn}: ${eStats.name} đánh bạn mất ${eDmg} máu. (Bạn còn ${pStats.hp})</p>`;
-                logBox.scrollTop = logBox.scrollHeight;
-                
+                log.innerHTML += `<p class="log-enemy">T${turn}: Địch đánh bạn -${eDmg} HP. (Bạn: ${pStats.hp})</p>`;
+                log.scrollTop = log.scrollHeight;
                 turn++;
             }
 
             if(pStats.hp > 0) {
                 const pts = 10 + Math.floor(gameData.tower.floor/10);
                 const stones = 50 + gameData.tower.floor * 5;
-                gameData.tower.floor++;
-                gameData.tower.points += pts;
-                gameData.resources.spirit_stones += stones;
-                logBox.innerHTML += `<p class="log-info text-center mt-2">CHIẾN THẮNG! Nhận ${pts} điểm, ${stones} linh thạch.</p>`;
+                gameData.tower.floor++; gameData.tower.points += pts; gameData.resources.spirit_stones += stones;
+                log.innerHTML += `<p class="log-info">THẮNG! +${pts} Điểm, +${stones} Linh Thạch</p>`;
                 saveData();
             } else {
-                logBox.innerHTML += `<p class="text-red-500 font-bold text-center mt-2">THẤT BẠI!</p>`;
+                log.innerHTML += `<p class="text-red-500 font-bold text-center mt-2">THẤT BẠI!</p>`;
             }
+            log.scrollTop = log.scrollHeight;
         }
 
-        // --- INIT & FIX SELECTION ---
+        // --- INIT ---
         window.onload = function() {
-            if(localStorage.getItem(LOCAL_STORAGE_KEY)) {
-                document.getElementById('btn-continue').classList.remove('hidden');
-            } else {
-                // Pre-render modal content if new game
-            }
+            if(localStorage.getItem(LOCAL_STORAGE_KEY)) document.getElementById('btn-continue').classList.remove('hidden');
         };
 
-        function newGame() {
-            if(localStorage.getItem(LOCAL_STORAGE_KEY) && !confirm("Xóa dữ liệu cũ?")) return;
-            initData();
-            document.getElementById('modal-selection').classList.remove('hidden');
-            renderSelectionUI();
-        }
-        
         function initData() {
             gameData = {
-                player: { name: 'Vô Danh', level: 1, exp: 0, potentialPoints: 0, equipped: {}, attributes: {}, daoPath: null },
+                player: { name: 'Vô Danh', level: 1, exp: 0, potentialPoints: 0, equipped: {}, attributes: {}, daoPath: null, spiritRoot: null },
                 resources: { spirit_stones: 0 },
                 inventory: { equips: [], items: [] },
                 tower: { floor: 1, points: 0 },
@@ -640,51 +682,9 @@
             };
         }
 
-        function renderSelectionUI() {
-            const daoDiv = document.getElementById('dao-list');
-            const rootDiv = document.getElementById('root-list');
-            
-            daoDiv.innerHTML = Object.entries(DAO_PATHS).map(([k, v]) => `
-                <div onclick="selectDao('${k}')" id="dao-btn-${k}" class="p-2 border border-gray-600 rounded hover:bg-gray-800 cursor-pointer">
-                    <div class="font-bold text-yellow-500 text-sm">${v.name}</div>
-                    <div class="text-[10px] text-gray-400">${v.desc}</div>
-                </div>`).join('');
-            
-            rootDiv.innerHTML = Object.entries(SPIRIT_ROOTS).map(([k, v]) => `
-                <div onclick="selectRoot('${k}')" id="root-btn-${k}" class="p-2 border border-gray-600 rounded hover:bg-gray-800 cursor-pointer">
-                    <div class="font-bold ${v.color} text-sm">${v.name} Linh Căn</div>
-                </div>`).join('');
-        }
-
-        function selectDao(k) {
-            tempSel.dao = k;
-            document.querySelectorAll('#dao-list > div').forEach(d => d.classList.remove('border-yellow-500', 'bg-gray-800'));
-            document.getElementById(`dao-btn-${k}`).classList.add('border-yellow-500', 'bg-gray-800');
-            document.getElementById('sel-dao-txt').innerText = DAO_PATHS[k].name;
-            checkConfirm();
-        }
-
-        function selectRoot(k) {
-            tempSel.root = k;
-            document.querySelectorAll('#root-list > div').forEach(d => d.classList.remove('border-yellow-500', 'bg-gray-800'));
-            document.getElementById(`root-btn-${k}`).classList.add('border-yellow-500', 'bg-gray-800');
-            document.getElementById('sel-root-txt').innerText = SPIRIT_ROOTS[k].name;
-            checkConfirm();
-        }
-
-        function checkConfirm() {
-            const btn = document.getElementById('btn-sel-confirm');
-            if(tempSel.dao && tempSel.root) {
-                btn.disabled = false;
-                btn.className = "px-6 py-2 bg-yellow-600 text-white font-bold rounded hover:bg-yellow-500";
-            }
-        }
-
-        function confirmSelection() {
-            gameData.player.daoPath = tempSel.dao;
-            gameData.player.spiritRoot = tempSel.root;
-            saveData();
-            document.getElementById('modal-selection').classList.add('hidden');
+        function newGame() {
+            if(localStorage.getItem(LOCAL_STORAGE_KEY) && !confirm("Xóa dữ liệu cũ?")) return;
+            initData();
             enterGame();
         }
 
@@ -692,7 +692,6 @@
             try {
                 const saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
                 gameData = saved;
-                // Patch old data
                 if(!gameData.tower) gameData.tower = { floor: 1, points: 0 };
                 enterGame();
             } catch(e) { initData(); newGame(); }
@@ -704,7 +703,7 @@
             updateUI();
             startGameLoop();
         }
-        
+
         function returnToMenu() {
             clearInterval(gameLoopInt);
             saveData();
@@ -716,10 +715,6 @@
         function triggerFileInput() { document.getElementById('file-upload').click(); }
         function handleFileUpload(input) { const f = input.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ gameData=JSON.parse(e.target.result); saveData(); enterGame(); }; r.readAsText(f); }
         function exportSaveFile() { const b = new Blob([JSON.stringify(gameData)], {type:"application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'save.json'; a.click(); }
-        
-        // Placeholder for other modals to avoid error
-        function renderCharacter(c) { c.innerHTML = '<div class="p-4 text-white">Character UI (Use basic stats)</div>'; }
-
     </script>
 </body>
 </html>
