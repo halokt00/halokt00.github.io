@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thiên Đạo Tu Tiên - Webgame Text RPG</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Tùy chỉnh Font chữ và Hiệu ứng nền */
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background-color: #0f172a; /* Màu nền tối (Slate 900) */
+            color: #e2e8f0; /* Màu chữ sáng (Slate 200) */
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        
+        /* Hiệu ứng tiêu đề */
+        .game-title {
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 10px rgba(234, 179, 8, 0.5); /* Vàng kim */
+        }
+
+        /* Hiệu ứng button */
+        .menu-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); /* Xanh dương */
+            border-color: #60a5fa;
+        }
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: 0.5s;
+        }
+        .menu-btn:hover::after {
+            left: 100%;
+        }
+
+        /* Ẩn thanh cuộn nhưng vẫn cuộn được */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <div id="main-menu" class="w-full max-w-md text-center space-y-8 animate-fade-in">
+        
+        <div class="space-y-2">
+            <i class="fa-solid fa-yin-yang text-6xl text-yellow-500 animate-spin-slow" style="animation-duration: 10s;"></i>
+            <h1 class="text-4xl md:text-5xl font-bold text-yellow-500 game-title tracking-wider mt-4">
+                THIÊN ĐẠO <br> <span class="text-white text-2xl md:text-3xl">TU TIÊN</span>
+            </h1>
+            <p class="text-gray-400 text-sm italic">"Phàm nhân tu tiên, nghịch thiên cải mệnh"</p>
+        </div>
+
+        <div class="flex flex-col gap-4 px-8">
+            
+            <button id="btn-continue" onclick="continueGame()" class="hidden menu-btn bg-green-900 border border-green-700 text-green-100 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
+                <i class="fa-solid fa-play mr-2"></i> Tiếp Tục
+            </button>
+
+            <button onclick="newGame()" class="menu-btn bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
+                <i class="fa-solid fa-plus mr-2"></i> Chơi Mới
+            </button>
+
+            <button onclick="openImportModal()" class="menu-btn bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
+                <i class="fa-solid fa-file-import mr-2"></i> Tải Save
+            </button>
+
+            <button onclick="toggleUpdateModal(true)" class="menu-btn bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
+                <i class="fa-solid fa-scroll mr-2"></i> Cập Nhật
+            </button>
+        </div>
+
+        <div class="text-xs text-gray-600 mt-8">
+            Ver 1.0.0 - Alpha Test
+        </div>
+    </div>
+
+    <div id="game-container" class="hidden w-full max-w-4xl h-[90vh] bg-gray-900 border border-gray-700 rounded-xl shadow-2xl relative overflow-hidden flex flex-col">
+        <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
+            <span class="font-bold text-yellow-500">Người chơi: <span id="display-name">Vô Danh</span></span>
+            <button onclick="returnToMenu()" class="text-xs text-red-400 hover:text-red-300">
+                <i class="fa-solid fa-right-from-bracket"></i> Thoát
+            </button>
+        </div>
+        
+        <div class="p-10 text-center flex-1 flex flex-col justify-center items-center">
+            <h2 class="text-2xl mb-4">Chào mừng đạo hữu bước vào thế giới tu tiên!</h2>
+            <p class="text-gray-400">Giao diện game sẽ được cập nhật ở các bước tiếp theo...</p>
+        </div>
+    </div>
+
+    <div id="modal-update" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-600 w-full max-w-lg rounded-lg shadow-2xl overflow-hidden">
+            <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-yellow-500"><i class="fa-solid fa-newspaper mr-2"></i>Nhật Ký Cập Nhật</h3>
+                <button onclick="toggleUpdateModal(false)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 max-h-[60vh] overflow-y-auto text-sm space-y-4 text-gray-300">
+                <div>
+                    <div class="text-green-400 font-bold mb-1">Phiên bản 1.0.0 (Mới nhất)</div>
+                    <ul class="list-disc list-inside space-y-1 pl-2">
+                        <li>Ra mắt giao diện Menu chính mới.</li>
+                        <li>Hệ thống Save/Load dữ liệu cục bộ.</li>
+                        <li>Tối ưu hóa giao diện Dark Mode với Tailwind.</li>
+                        <li>Thêm tính năng nhập mã Save (Import).</li>
+                    </ul>
+                </div>
+                <div class="opacity-50">
+                    <div class="font-bold mb-1">Phiên bản 0.9.0</div>
+                    <ul class="list-disc list-inside space-y-1 pl-2">
+                        <li>Khởi tạo dự án.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="p-3 bg-gray-800 border-t border-gray-700 text-center">
+                <button onclick="toggleUpdateModal(false)" class="px-4 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm">Đã Hiểu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CẤU HÌNH HỆ THỐNG
+        const SAVE_KEY = 'thien_dao_tu_tien_save_v1';
+        
+        // BIẾN TRẠNG THÁI (State)
+        let gameData = {
+            player: {
+                name: 'Vô Danh',
+                level: 1,
+                exp: 0
+            },
+            resources: {
+                gold: 0,
+                spirit_stones: 0
+            },
+            inventory: [],
+            // Thêm các dữ liệu khác sau này
+        };
+
+        // --- HỆ THỐNG MENU & SAVE ---
+
+        // 1. Khởi tạo khi vào trang
+        window.onload = function() {
+            checkSaveData();
+        };
+
+        // 2. Kiểm tra Save
+        function checkSaveData() {
+            const savedData = localStorage.getItem(SAVE_KEY);
+            const btnContinue = document.getElementById('btn-continue');
+            
+            if (savedData) {
+                // Nếu có save -> Hiện nút Tiếp Tục
+                btnContinue.classList.remove('hidden');
+                console.log("Tìm thấy dữ liệu save cũ.");
+            } else {
+                btnContinue.classList.add('hidden');
+            }
+        }
+
+        // 3. Chức năng: Chơi Mới
+        function newGame() {
+            // Nếu đã có save thì cảnh báo
+            if (localStorage.getItem(SAVE_KEY)) {
+                if (!confirm("Cảnh báo: Bạn đang có dữ liệu chơi cũ. Bắt đầu lại sẽ XÓA VĨNH VIỄN tiến trình cũ. Bạn chắc chứ?")) {
+                    return;
+                }
+            }
+            
+            // Xóa save cũ, reset data
+            localStorage.removeItem(SAVE_KEY);
+            initDefaultData(); 
+            saveGame(); // Tạo save mới ngay lập tức
+            enterGame();
+        }
+
+        // 4. Chức năng: Tiếp Tục
+        function continueGame() {
+            const savedData = localStorage.getItem(SAVE_KEY);
+            if (savedData) {
+                try {
+                    gameData = JSON.parse(savedData);
+                    enterGame();
+                    alert("Chào mừng đạo hữu " + gameData.player.name + " quay trở lại!");
+                } catch (e) {
+                    alert("Lỗi: File save bị hỏng!");
+                    console.error(e);
+                }
+            }
+        }
+
+        // 5. Chức năng: Tải Save (Import)
+        function openImportModal() {
+            const dataStr = prompt("Dán mã Save (JSON) của bạn vào đây:");
+            if (dataStr) {
+                try {
+                    const parsed = JSON.parse(dataStr);
+                    // Kiểm tra sơ bộ cấu trúc save (tránh lỗi)
+                    if (parsed.player) {
+                        gameData = parsed;
+                        saveGame(); // Lưu vào localStorage
+                        enterGame();
+                        alert("Tải save thành công!");
+                    } else {
+                        alert("Mã save không hợp lệ (Thiếu dữ liệu nhân vật).");
+                    }
+                } catch (e) {
+                    alert("Mã save không đúng định dạng JSON.");
+                }
+            }
+        }
+
+        // 6. Chuyển cảnh vào Game
+        function enterGame() {
+            // Ẩn Menu
+            document.getElementById('main-menu').classList.add('hidden');
+            // Hiện Game
+            document.getElementById('game-container').classList.remove('hidden');
+            
+            // Cập nhật giao diện sơ khai
+            document.getElementById('display-name').innerText = gameData.player.name;
+        }
+
+        // 7. Quay về Menu (Thoát)
+        function returnToMenu() {
+            // Lưu game trước khi thoát
+            saveGame();
+            
+            document.getElementById('game-container').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
+            checkSaveData(); // Cập nhật lại nút Tiếp tục
+        }
+
+        // 8. Hàm Lưu Game (Dùng chung)
+        function saveGame() {
+            localStorage.setItem(SAVE_KEY, JSON.stringify(gameData));
+            console.log("Game đã lưu.");
+        }
+
+        // 9. Khởi tạo dữ liệu mặc định
+        function initDefaultData() {
+            gameData = {
+                player: {
+                    name: 'Vô Danh Tiều Phu', // Tên mặc định
+                    level: 1,
+                    realm: 'Phàm Nhân',
+                    exp: 0
+                },
+                lastSaved: Date.now()
+            };
+        }
+
+        // --- UI UTILS ---
+        function toggleUpdateModal(show) {
+            const modal = document.getElementById('modal-update');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
