@@ -4,267 +4,296 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thiên Đạo Tu Tiên - Webgame Text RPG</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-
     <style>
         body {
             font-family: 'Noto Serif SC', serif;
-            background-color: #0f172a;
-            color: #e2e8f0;
+            background-color: #0f172a; color: #e2e8f0;
             background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
             min-height: 100vh;
         }
+        .game-title { font-family: 'Cinzel', serif; text-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
+        .menu-btn { transition: all 0.2s ease; }
+        .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         
-        .game-title {
-            font-family: 'Cinzel', serif;
-            text-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
+        /* Hiệu ứng "thở" cho ảnh tu luyện */
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.9; filter: brightness(1); }
+            50% { transform: scale(1.02); opacity: 1; filter: brightness(1.2); box-shadow: 0 0 30px rgba(234, 179, 8, 0.4); }
         }
-
-        .menu-btn {
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .menu-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-            border-color: #60a5fa;
+        .meditating-img {
+            animation: breathe 4s ease-in-out infinite;
         }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
-
     <input type="file" id="file-upload" class="hidden" accept=".json" onchange="handleFileUpload(this)">
 
     <div id="main-menu" class="w-full max-w-md text-center space-y-8">
-        
         <div class="space-y-2">
             <i class="fa-solid fa-yin-yang text-6xl text-yellow-500 animate-spin" style="animation-duration: 10s;"></i>
             <h1 class="text-4xl md:text-5xl font-bold text-yellow-500 game-title tracking-wider mt-4">
                 THIÊN ĐẠO <br> <span class="text-white text-2xl md:text-3xl">TU TIÊN</span>
             </h1>
-            <p class="text-gray-400 text-sm italic">"Phàm nhân tu tiên, nghịch thiên cải mệnh"</p>
         </div>
-
         <div class="flex flex-col gap-4 px-8">
             <button id="btn-continue" onclick="continueGame()" class="hidden menu-btn bg-green-900 border border-green-700 text-green-100 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
                 <i class="fa-solid fa-play mr-2"></i> Tiếp Tục
             </button>
-
             <button onclick="newGame()" class="menu-btn bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
                 <i class="fa-solid fa-plus mr-2"></i> Chơi Mới
             </button>
-
             <button onclick="triggerFileInput()" class="menu-btn bg-blue-900 border border-blue-700 hover:bg-blue-800 text-blue-100 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
-                <i class="fa-solid fa-upload mr-2"></i> Tải Save (File)
-            </button>
-
-            <button onclick="toggleUpdateModal(true)" class="menu-btn bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 py-3 rounded-lg font-bold uppercase tracking-widest shadow-lg">
-                <i class="fa-solid fa-scroll mr-2"></i> Thông Tin
+                <i class="fa-solid fa-upload mr-2"></i> Tải Save
             </button>
         </div>
-
-        <div class="text-xs text-gray-600 mt-8">Ver 1.0.1 - File System Update</div>
+        <div class="text-xs text-gray-600 mt-8">Ver 1.2.0 - Auto Tu Luyện & Linh Thạch</div>
     </div>
 
     <div id="game-container" class="hidden w-full max-w-4xl h-[90vh] bg-gray-900 border border-gray-700 rounded-xl shadow-2xl relative overflow-hidden flex flex-col">
         
-        <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center shadow-md">
-            <div class="font-bold text-yellow-500 flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-gray-700 border border-yellow-600 flex items-center justify-center">
-                    <i class="fa-solid fa-user"></i>
+        <div class="bg-gray-800 p-4 border-b border-gray-700 flex flex-wrap justify-between items-center shadow-md z-10 gap-2">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-700 border border-yellow-600 flex items-center justify-center text-yellow-500">
+                    <i class="fa-solid fa-user-ninja"></i>
                 </div>
-                <span id="display-name">Vô Danh</span>
-                <span class="text-xs text-gray-400 bg-gray-900 px-2 py-1 rounded border border-gray-700" id="display-realm">Phàm Nhân</span>
+                <div>
+                    <div id="display-name" class="font-bold text-yellow-500 leading-tight truncate max-w-[120px]">Vô Danh</div>
+                    <div id="display-realm" class="text-xs text-cyan-300 font-bold truncate max-w-[120px]">Phàm Nhân</div>
+                </div>
             </div>
+
+            <div class="flex items-center gap-4 bg-gray-900 px-3 py-1 rounded-full border border-gray-700">
+                <div class="flex items-center text-blue-400 text-sm font-bold" title="Linh Thạch">
+                    <i class="fa-solid fa-gem mr-2"></i>
+                    <span id="display-stones">0</span>
+                </div>
+                 </div>
             
             <div class="flex gap-2">
-                <button onclick="exportSaveFile()" class="text-xs bg-green-800 hover:bg-green-700 text-white px-3 py-1 rounded border border-green-600 transition">
-                    <i class="fa-solid fa-download mr-1"></i> Lưu Data
-                </button>
-                
-                <button onclick="returnToMenu()" class="text-xs bg-red-900 hover:bg-red-800 text-white px-3 py-1 rounded border border-red-700 transition">
-                    <i class="fa-solid fa-right-from-bracket mr-1"></i> Thoát
-                </button>
+                <button onclick="exportSaveFile()" class="text-xs bg-green-800 hover:bg-green-700 text-white px-3 py-1 rounded border border-green-600"><i class="fa-solid fa-download"></i> Lưu</button>
+                <button onclick="returnToMenu()" class="text-xs bg-red-900 hover:bg-red-800 text-white px-3 py-1 rounded border border-red-700"><i class="fa-solid fa-right-from-bracket"></i> Thoát</button>
             </div>
         </div>
         
-        <div class="p-10 text-center flex-1 flex flex-col justify-center items-center bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
-            <h2 class="text-2xl mb-4 text-yellow-100 font-serif">Khu Vực Tu Luyện</h2>
-            <p class="text-gray-400 max-w-md">
-                Chức năng game sẽ được xây dựng ở bước tiếp theo.<br>
-                Hiện tại bạn có thể thử chức năng <b>Lưu Data</b> (tải về máy) và <b>Tải Save</b> (tải lên từ máy) để kiểm tra hệ thống.
-            </p>
-        </div>
-    </div>
+        <div class="flex-1 overflow-y-auto p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] relative flex flex-col items-center justify-center">
+            
+            <div class="max-w-md w-full text-center space-y-6 relative z-10">
+                
+                <div class="relative w-64 h-64 mx-auto rounded-full border-4 border-yellow-600/50 overflow-hidden shadow-[0_0_30px_rgba(234,179,8,0.2)] bg-black">
+                    <img src="https://i.pinimg.com/564x/c1/8d/19/c18d19606a928b9d4b0a7341b833c26d.jpg" alt="Tu Luyện" class="w-full h-full object-cover meditating-img">
+                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent"></div>
+                </div>
 
-    <div id="modal-update" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-gray-600 w-full max-w-lg rounded-lg shadow-2xl">
-            <div class="bg-gray-800 p-3 border-b border-gray-700 flex justify-between items-center">
-                <h3 class="font-bold text-yellow-500">Nhật Ký Cập Nhật</h3>
-                <button onclick="toggleUpdateModal(false)"><i class="fa-solid fa-xmark text-gray-400 hover:text-white"></i></button>
+                <div>
+                    <h2 class="text-xl font-bold text-yellow-100">Đang Nhập Định Tu Hành...</h2>
+                    <p class="text-sm text-cyan-400 animate-pulse mt-1">
+                        <i class="fa-solid fa-seedling mr-1"></i> Tự động hấp thu Thiên Địa Linh Khí
+                    </p>
+                    <p id="gain-rate-text" class="text-xs text-gray-500 mt-2"></p>
+                </div>
+
+                <div class="bg-gray-800 rounded-full h-6 w-full border border-gray-600 relative overflow-hidden shadow">
+                    <div id="exp-bar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-500 ease-out" style="width: 0%"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        <span id="exp-text">0 / 100</span>
+                    </div>
+                </div>
+
             </div>
-            <div class="p-4 text-sm text-gray-300">
-                <ul class="list-disc list-inside space-y-1">
-                    <li><span class="text-green-400 font-bold">[Mới]</span> Hệ thống tải save từ file `.json` trên máy tính.</li>
-                    <li><span class="text-green-400 font-bold">[Mới]</span> Nút "Lưu Data" cho phép tải file save về máy để lưu trữ an toàn.</li>
-                </ul>
-            </div>
+
         </div>
     </div>
 
     <script>
-        const LOCAL_STORAGE_KEY = 'thien_dao_tu_tien_autosave';
+        const LOCAL_STORAGE_KEY = 'thien_dao_tu_tien_v1_2';
+        const REALMS = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần", "Phản Hư", "Hợp Thể", "Đại Thừa", "Độ Kiếp", "Tiên Nhân", "Chân Tiên", "Kim Tiên", "Thái Ất", "Đại La", "Hỗn Độn", "Chí Tôn", "Thiên Đạo", "Vô Cực", "Hư Vô", "Hồng Mông", "Đạo Tổ", "Vô Tận", "Chân Lý", "Chưởng Nguyên", "Siêu Thoát"];
+        const SUB_REALMS = ["Nhất Trọng", "Nhị Trọng", "Tam Trọng", "Tứ Trọng", "Ngũ Trọng", "Lục Trọng", "Thất Trọng", "Bát Trọng", "Cửu Trọng"];
+        const TICK_RATE_MS = 1000; // Cập nhật mỗi 1 giây
+
         let gameData = {};
+        let gameLoopInterval = null; // Biến giữ vòng lặp game
 
-        // --- KHỞI TẠO ---
-        window.onload = function() {
-            checkAutoSave();
-        };
+        // --- CORE CALCULATION ---
+        function getMaxExp(level) {
+            if (level >= 225) return 42000000000;
+            const R = 1.0933405; 
+            const exp = 100 * Math.pow(R, level - 1);
+            if (exp > 1000000) return Math.floor(exp / 100000) * 100000;
+            if (exp > 1000) return Math.floor(exp / 100) * 100;
+            return Math.floor(exp);
+        }
+        function getRealmName(level) {
+            if (level > 225) return "Siêu Thoát Viên Mãn";
+            const realmIndex = Math.floor((level - 1) / 9);
+            const subIndex = (level - 1) % 9;
+            if (realmIndex >= REALMS.length) return "Vô Thượng Cảnh";
+            return `${REALMS[realmIndex]} ${SUB_REALMS[subIndex]}`;
+        }
 
+        // --- AUTO CULTIVATION LOOP (NEW) ---
+        function startGameLoop() {
+            if (gameLoopInterval) clearInterval(gameLoopInterval); // Đảm bảo chỉ có 1 loop chạy
+            gameLoopInterval = setInterval(gameTick, TICK_RATE_MS);
+            console.log("Game loop started.");
+        }
+
+        function stopGameLoop() {
+            if (gameLoopInterval) {
+                clearInterval(gameLoopInterval);
+                gameLoopInterval = null;
+                console.log("Game loop stopped.");
+            }
+        }
+
+        function gameTick() {
+            const now = Date.now();
+            // Tính thời gian trôi qua kể từ lần tick trước (để xử lý khi tab bị đóng băng)
+            // Giới hạn tối đa 1 lần tính là 60 giây để tránh lỗi số quá lớn nếu treo máy quá lâu
+            const elapsed = Math.min(now - gameData.lastTick, 60000); 
+            const multiplier = elapsed / TICK_RATE_MS; // Hệ số nhân nếu bị lag
+            gameData.lastTick = now;
+
+            const level = gameData.player.level;
+            
+            // === CÔNG THỨC TÍNH EXP TREO MÁY ===
+            // Mục tiêu: Khoảng 300-600 giây (5-10 phút) để lên 1 cấp ở các cấp độ đầu
+            const currentMaxExp = getMaxExp(level);
+            let expGainPerSec = Math.ceil(currentMaxExp / 450); // Cơ bản: 450 giây (7.5 phút) 1 cấp
+            // Đảm bảo tối thiểu nhận 1 EXP
+            if (expGainPerSec < 1) expGainPerSec = 1; 
+            
+            const totalExpGain = Math.floor(expGainPerSec * multiplier);
+
+            // === CÔNG THỨC TÍNH LINH THẠCH TREO MÁY ===
+            // Mỗi giây nhận: (Level / 3) + 1 linh thạch. Level 1 nhận 1, Level 30 nhận 11.
+            const stoneGainPerSec = Math.floor(level / 3) + 1;
+            const totalStoneGain = Math.floor(stoneGainPerSec * multiplier);
+
+            // Cộng tài nguyên
+            gameData.player.exp += totalExpGain;
+            gameData.resources.spirit_stones += totalStoneGain;
+
+            // Xử lý Đột phá tự động
+            let maxExp = getMaxExp(gameData.player.level);
+            let leveledUp = false;
+            while (gameData.player.exp >= maxExp && gameData.player.level < 225) {
+                gameData.player.exp -= maxExp;
+                gameData.player.level++;
+                maxExp = getMaxExp(gameData.player.level);
+                leveledUp = true;
+            }
+
+            // Lưu dữ liệu mỗi tick (Tần suất cao nhưng an toàn cho webgame nhỏ)
+            saveToLocalStorage();
+            
+            // Cập nhật UI (chỉ cần cập nhật thanh EXP, tên cảnh giới, số đá)
+            updateDynamicUI(); 
+
+            // Hiển thị thông báo nếu lên cấp (Tùy chọn, có thể gây phiền nếu treo máy lâu)
+            // if (leveledUp) console.log("Đột phá thành công lên level " + gameData.player.level);
+        }
+
+        // --- GAME FLOW & DATA ---
+        window.onload = function() { checkAutoSave(); };
         function checkAutoSave() {
             const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-            const btnContinue = document.getElementById('btn-continue');
-            if (savedData) {
-                btnContinue.classList.remove('hidden');
-            } else {
-                btnContinue.classList.add('hidden');
-            }
+            document.getElementById('btn-continue').classList.toggle('hidden', !savedData);
         }
-
-        // --- CÁC HÀM MENU ---
-
         function newGame() {
-            if (localStorage.getItem(LOCAL_STORAGE_KEY)) {
-                if (!confirm("Cảnh báo: Bạn có dữ liệu cũ. Tạo mới sẽ xóa tiến trình tự động lưu. Tiếp tục?")) return;
-            }
+            if (localStorage.getItem(LOCAL_STORAGE_KEY) && !confirm("Tạo mới sẽ xóa dữ liệu cũ. Tiếp tục?")) return;
             initDefaultData();
-            saveToLocalStorage(); // Lưu đè ngay lập tức
+            saveToLocalStorage();
             enterGame();
         }
-
         function continueGame() {
-            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (savedData) {
-                try {
-                    gameData = JSON.parse(savedData);
-                    enterGame();
-                } catch (e) {
-                    alert("File save trình duyệt bị lỗi!");
-                }
-            }
+            try {
+                const saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
+                if (saved) { gameData = mergeData(saved); enterGame(); }
+            } catch (e) { alert("Save lỗi!"); initDefaultData(); }
         }
-
-        // --- HỆ THỐNG FILE SAVE/LOAD (MỚI) ---
-
-        // 1. Kích hoạt chọn file
-        function triggerFileInput() {
-            document.getElementById('file-upload').click();
+        // Hàm gộp dữ liệu cũ vào cấu trúc mới nếu có update
+        function mergeData(oldData) {
+             const newData = initDefaultData(true); // Lấy cấu trúc chuẩn
+             // Merge đè dữ liệu cũ lên
+             newData.player = { ...newData.player, ...oldData.player };
+             newData.resources = { ...newData.resources, ...oldData.resources };
+             newData.lastTick = Date.now(); // Reset lastTick để tránh bug thời gian
+             return newData;
         }
-
-        // 2. Xử lý khi người dùng chọn file
-        function handleFileUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const content = e.target.result;
-                    const parsedData = JSON.parse(content);
-
-                    // Kiểm tra cơ bản xem có phải file game không
-                    if (parsedData.player && parsedData.resources) {
-                        gameData = parsedData;
-                        saveToLocalStorage(); // Cập nhật luôn vào trình duyệt
-                        alert("Tải dữ liệu thành công!");
-                        enterGame();
-                    } else {
-                        alert("File không hợp lệ: Thiếu dữ liệu nhân vật.");
-                    }
-                } catch (error) {
-                    alert("Lỗi đọc file: File bị hỏng hoặc không đúng định dạng JSON.");
-                    console.error(error);
-                }
+        function initDefaultData(returnDataOnly = false) {
+            const data = {
+                player: { name: 'Vô Danh', level: 1, exp: 0 },
+                resources: { gold: 0, spirit_stones: 0 }, // Thêm linh thạch
+                lastTick: Date.now(), // Thời điểm cuối cùng game chạy
+                lastSaved: Date.now()
             };
-            reader.readAsText(file);
-            
-            // Reset input để chọn lại file cùng tên vẫn nhận
-            input.value = '';
+            if (returnDataOnly) return data;
+            gameData = data;
         }
-
-        // 3. Xuất file Save (Download)
-        function exportSaveFile() {
-            // Cập nhật thời gian save
-            gameData.lastSaved = new Date().toLocaleString();
-            
-            const dataStr = JSON.stringify(gameData, null, 2); // Format đẹp
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            
-            // Tạo tên file có ngày giờ: ThienDao_Save_2023-10-25_10-30.json
-            const date = new Date();
-            const timeString = date.toISOString().slice(0,10).replace(/-/g,"") + "_" + date.getHours() + "h" + date.getMinutes();
-            const fileName = `ThienDao_Save_${timeString}.json`;
-
-            // Tạo thẻ a ảo để click tải về
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            
-            // Dọn dẹp
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        // --- LOGIC GAME CHUNG ---
-
+        function saveToLocalStorage() { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameData)); }
+        
         function enterGame() {
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
-            updateUI();
+            gameData.lastTick = Date.now(); // Đặt lại mốc thời gian khi bắt đầu vào
+            updateFullUI();
+            startGameLoop(); // Bắt đầu auto
         }
-
         function returnToMenu() {
+            stopGameLoop(); // Dừng auto
             saveToLocalStorage();
             document.getElementById('game-container').classList.add('hidden');
             document.getElementById('main-menu').classList.remove('hidden');
             checkAutoSave();
         }
 
-        function initDefaultData() {
-            gameData = {
-                player: {
-                    name: 'Vô Danh',
-                    realm: 'Luyện Khí Tầng 1',
-                    level: 1,
-                    exp: 0
-                },
-                resources: {
-                    gold: 0,
-                    spirit_stones: 0
-                },
-                lastSaved: Date.now()
-            };
+        // --- UI HELPER ---
+        // Cập nhật toàn bộ UI (khi mới vào game)
+        function updateFullUI() {
+            updateDynamicUI();
+        }
+        // Chỉ cập nhật những thứ thay đổi liên tục
+        function updateDynamicUI() {
+            const p = gameData.player;
+            const maxExp = getMaxExp(p.level);
+            
+            document.getElementById('display-name').innerText = p.name;
+            document.getElementById('display-realm').innerText = getRealmName(p.level);
+            // Cập nhật Linh Thạch
+            document.getElementById('display-stones').innerText = formatNumber(gameData.resources.spirit_stones);
+            
+            const percent = Math.min(100, (p.exp / maxExp) * 100);
+            document.getElementById('exp-bar').style.width = `${percent}%`;
+            document.getElementById('exp-text').innerText = `${formatNumber(p.exp)} / ${formatNumber(maxExp)}`;
+            
+            // Cập nhật text hiển thị tốc độ
+            const expGain = Math.ceil(maxExp / 450);
+            const stoneGain = Math.floor(p.level / 3) + 1;
+            document.getElementById('gain-rate-text').innerText = `(+${formatNumber(expGain)} EXP & +${formatNumber(stoneGain)} Linh thạch mỗi giây)`;
+        }
+        function formatNumber(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(2) + " Tỷ";
+            if (num >= 1000000) return (num / 1000000).toFixed(2) + " Triệu";
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        function saveToLocalStorage() {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(gameData));
+        // --- SAVE FILE ---
+        function triggerFileInput() { document.getElementById('file-upload').click(); }
+        function handleFileUpload(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try { gameData = mergeData(JSON.parse(e.target.result)); saveToLocalStorage(); enterGame(); alert("Tải thành công!"); } catch (err) { alert("File lỗi!"); }
+            }; reader.readAsText(file); input.value = '';
         }
-
-        function updateUI() {
-            document.getElementById('display-name').innerText = gameData.player.name;
-            document.getElementById('display-realm').innerText = gameData.player.realm;
-        }
-
-        function toggleUpdateModal(show) {
-            const modal = document.getElementById('modal-update');
-            show ? modal.classList.remove('hidden') : modal.classList.add('hidden');
+        function exportSaveFile() {
+            gameData.lastSaved = new Date().toLocaleString();
+            const blob = new Blob([JSON.stringify(gameData, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob); const a = document.createElement('a');
+            a.href = url; a.download = `ThienDao_Save_${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
         }
     </script>
 </body>
